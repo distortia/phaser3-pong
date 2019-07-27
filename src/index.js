@@ -15,7 +15,7 @@ const config = {
   physics: {
     default: 'arcade',
     arcade: {
-      debug: false,
+      debug: true,
     }
   }
 }
@@ -30,6 +30,8 @@ let colliderActivated = false
 let player1Score = 0
 let player2Score = 0
 let canScore = true
+const maxScore = 10
+let gameOver = false
 
 function preload() {
   this.load.image('player1', playerImage)
@@ -41,15 +43,17 @@ function preload() {
 function create() {
   this.physics.world.setBounds(0, 0, 800, 600)
   this.cameras.main.backgroundColor.setTo(255,255,255)
-  beepSound        = this.sound.add('beep')
-  player1ScoreText = this.add.text(20, 16, 'Score: 0', {fontSize: '32px', fill: '#000'})
-  player2ScoreText = this.add.text(600, 16, 'Score: 0', {fontSize: '32px', fill: '#000'})
-  gameOverText     = this.add.text(300, 300, '', {fontSize: '32px', fill: '#000'})
-  player1   = this.physics.add.sprite(0, 300, 'player1')
-  player2   = this.physics.add.sprite(775, 300, 'player2')
-  ball      = this.physics.add.sprite(400, 300, 'ball')
+  beepSound         = this.sound.add('beep')
+  player1ScoreText  = this.add.text(20, 16, 'Score: 0', {fontSize: '32px', fill: '#000'})
+  player2ScoreText  = this.add.text(600, 16, 'Score: 0', {fontSize: '32px', fill: '#000'})
+  gameOverText      = this.add.text(300, 300, '', {fontSize: '32px', fill: '#000'})
+  player1           = this.physics.add.sprite(0, 300, 'player1')
+  player1.name      = 'player1'
+  player2           = this.physics.add.sprite(800, 300, 'player2')
+  player2.name      = 'player2'
+  ball              = this.physics.add.sprite(400, 300, 'ball')
 
-  leftWall  = this.physics.add.sprite(0, 1, '')
+  leftWall = this.physics.add.sprite(0, 1, '')
   leftWall.setScale(1, 100)
   leftWall.name = 'leftWall'
 
@@ -62,11 +66,12 @@ function create() {
   this.physics.add.overlap(ball, leftWall, scorePoint, null, null)
   this.physics.add.overlap(ball, rightWall, scorePoint, null, null)
 
-  player1.setCollideWorldBounds(true)
-  player2.setCollideWorldBounds(true)
-  ball.setCollideWorldBounds(true)
-  ball.setBounce(1)
-  ball.setVelocity(randomStartDirection(), 0)
+  player1.setCollideWorldBounds(true).setBounce(0)
+  player2.setCollideWorldBounds(true).setBounce(0)
+  ball.setCollideWorldBounds(true).setBounce(1)
+  ball.setVelocityX(randomStartDirection())
+  ball.setVelocity(-ballSpeed, 0)
+  ball.setFriction(0)
 }
 
 function update () {
@@ -92,14 +97,22 @@ function update () {
 }
 
 function reflectBall (player, ball) {
-  if (colliderActivated) {
-    beepSound.play()
-    ball.setVelocityX(ballSpeed)
-    ball.setVelocityY(Phaser.Math.Between(1, 800))
-    colliderActivated = false
-    return
+  let newX, newY
+  beepSound.play()
+  if(player.name === 'player1') {
+    newX = ballSpeed
+  } else {
+    newX = -ballSpeed
   }
-  colliderActivated = true
+  if (ball.y === player.y) {
+    newY = 0
+  }
+  if (ball.y < player.y) {
+    newY = -(player.y - ball.y) * ball.body.angle * 2
+  } else if (ball.y > player.y) {
+    newY = -(player.y - ball.y) * ball.body.angle * 2
+  }
+  ball.setVelocity(newX, newY)
 }
 
 function scorePoint (ball, wall) {
@@ -113,11 +126,13 @@ function scorePoint (ball, wall) {
       player2ScoreText.setText(`Score: ${player2Score}`)
     }
   }
-  if(player1Score === 10 || player2Score === 10) {
-    gameOver()
+  if(player1Score === maxScore || player2Score === maxScore) {
+    gameIsOver()
     return
   }
-  resetCanScore()
+  if(!gameOver) {
+    resetCanScore()
+  }
 }
 function randomStartDirection () {
   let velocity
@@ -135,8 +150,9 @@ function resetCanScore() {
     canScore = true
   }, 800)
 }
-function gameOver () {
+function gameIsOver () {
   gameOverText.setText('GAME OVER')
   ball.setVelocity(0)
   canScore = false
+  gameOver = true
 }
