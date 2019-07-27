@@ -23,7 +23,7 @@ const config = {
 // Ball is 25w/25l
 
 const game = new Phaser.Game(config)
-let player1, player2, ball, leftWall, rightWall, player1ScoreText, player2ScoreText, gameOverText, gameRestartText
+let player1, player2, ball, leftWall, rightWall, player1ScoreText, player2ScoreText, gameOverText, gameRestartText, beepSound
 const playerSpeed = 500
 const ballSpeed = 500
 let colliderActivated = false
@@ -35,16 +35,18 @@ function preload() {
   this.load.image('player1', playerImage)
   this.load.image('player2', playerImage)
   this.load.image('ball', ballImage)
+  this.load.audio({key: 'beep', url: ['/src/assets/beep.mp3', '/src/assets/beep.wav']})
 }
 
 function create() {
   this.physics.world.setBounds(0, 0, 800, 600)
   this.cameras.main.backgroundColor.setTo(255,255,255)
+  beepSound        = this.sound.add('beep')
   player1ScoreText = this.add.text(20, 16, 'Score: 0', {fontSize: '32px', fill: '#000'})
   player2ScoreText = this.add.text(600, 16, 'Score: 0', {fontSize: '32px', fill: '#000'})
   gameOverText     = this.add.text(300, 300, '', {fontSize: '32px', fill: '#000'})
   player1   = this.physics.add.sprite(0, 300, 'player1')
-  player2   = this.physics.add.sprite(800, 300, 'player2')
+  player2   = this.physics.add.sprite(775, 300, 'player2')
   ball      = this.physics.add.sprite(400, 300, 'ball')
 
   leftWall  = this.physics.add.sprite(0, 1, '')
@@ -91,6 +93,7 @@ function update () {
 
 function reflectBall (player, ball) {
   if (colliderActivated) {
+    beepSound.play()
     ball.setVelocityX(ballSpeed)
     ball.setVelocityY(Phaser.Math.Between(1, 800))
     colliderActivated = false
