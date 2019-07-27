@@ -1,5 +1,5 @@
-import Phaser from "phaser";
-import playerImage from "./assets/player.png";
+import Phaser, { Scene } from "phaser"
+import playerImage from "./assets/player.png"
 import ballImage from './assets/ball.png'
 
 const config = {
@@ -18,12 +18,12 @@ const config = {
       debug: false,
     }
   }
-};
+}
 // Player is 50w/100l
 // Ball is 25w/25l
 
-const game = new Phaser.Game(config);
-let player1, player2, ball, leftWall, rightWall, player1ScoreText, player2ScoreText, divider
+const game = new Phaser.Game(config)
+let player1, player2, ball, leftWall, rightWall, player1ScoreText, player2ScoreText, gameOverText, gameRestartText
 const playerSpeed = 500
 const ballSpeed = 500
 let colliderActivated = false
@@ -38,16 +38,14 @@ function preload() {
 }
 
 function create() {
-  this.physics.world.setBounds(0, 0, 800, 600);
+  this.physics.world.setBounds(0, 0, 800, 600)
   this.cameras.main.backgroundColor.setTo(255,255,255)
   player1ScoreText = this.add.text(20, 16, 'Score: 0', {fontSize: '32px', fill: '#000'})
   player2ScoreText = this.add.text(600, 16, 'Score: 0', {fontSize: '32px', fill: '#000'})
+  gameOverText     = this.add.text(300, 300, '', {fontSize: '32px', fill: '#000'})
   player1   = this.physics.add.sprite(0, 300, 'player1')
   player2   = this.physics.add.sprite(800, 300, 'player2')
   ball      = this.physics.add.sprite(400, 300, 'ball')
-
-  divider   = this.physics.add.sprite(400, 300)
-  divider.setScale(0, 100)
 
   leftWall  = this.physics.add.sprite(0, 1, '')
   leftWall.setScale(1, 100)
@@ -112,6 +110,10 @@ function scorePoint (ball, wall) {
       player2ScoreText.setText(`Score: ${player2Score}`)
     }
   }
+  if(player1Score === 10 || player2Score === 10) {
+    gameOver()
+    return
+  }
   resetCanScore()
 }
 function randomStartDirection () {
@@ -124,8 +126,14 @@ function randomStartDirection () {
   }
   return velocity
 }
+// Super Hacky work around in an attempt to ensure that points cant get scored too often
 function resetCanScore() { 
   setTimeout(() => {
     canScore = true
   }, 800)
+}
+function gameOver () {
+  gameOverText.setText('GAME OVER')
+  ball.setVelocity(0)
+  canScore = false
 }
