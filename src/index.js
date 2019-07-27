@@ -15,7 +15,7 @@ const config = {
   physics: {
     default: 'arcade',
     arcade: {
-      debug: true,
+      debug: false,
     }
   }
 }
@@ -26,7 +26,6 @@ const game = new Phaser.Game(config)
 let player1, player2, ball, leftWall, rightWall, player1ScoreText, player2ScoreText, gameOverText, gameRestartText, beepSound
 const playerSpeed = 500
 const ballSpeed = 500
-let colliderActivated = false
 let player1Score = 0
 let player2Score = 0
 let canScore = true
@@ -53,12 +52,10 @@ function create() {
   player2.name      = 'player2'
   ball              = this.physics.add.sprite(400, 300, 'ball')
 
-  leftWall = this.physics.add.sprite(0, 1, '')
-  leftWall.setScale(1, 100)
+  leftWall = this.physics.add.sprite(0, 1, '').setScale(1, 100)
   leftWall.name = 'leftWall'
 
-  rightWall = this.physics.add.sprite(800, 1, '')
-  rightWall.setScale(1, 100)
+  rightWall = this.physics.add.sprite(800, 1, '').setScale(1, 100)
   rightWall.name = 'rightWall'
 
   this.physics.add.collider(player1, ball, reflectBall, null, null)
@@ -97,25 +94,20 @@ function update () {
 }
 
 function reflectBall (player, ball) {
-  let newX, newY
+  let newY
+  let newX = (player.name === 'player1') ? ballSpeed : -ballSpeed
   beepSound.play()
-  if(player.name === 'player1') {
-    newX = ballSpeed
-  } else {
-    newX = -ballSpeed
-  }
-  if (ball.y === player.y) {
-    newY = 0
-  }
   if (ball.y < player.y) {
     newY = -(player.y - ball.y) * ball.body.angle * 2
   } else if (ball.y > player.y) {
     newY = -(player.y - ball.y) * ball.body.angle * 2
+  } else {
+    newY = 0
   }
   ball.setVelocity(newX, newY)
 }
 
-function scorePoint (ball, wall) {
+function scorePoint (_ball, wall) {
   if (canScore) {
     canScore = false
     if (wall.name === 'rightWall') {
@@ -135,13 +127,8 @@ function scorePoint (ball, wall) {
   }
 }
 function randomStartDirection () {
-  let velocity
   let leftOrRight = Math.floor(Math.random() * Math.floor(2))
-  if (leftOrRight === 0) {
-    velocity = ballSpeed
-  } else {
-    velocity = -ballSpeed
-  }
+  let velocity = (leftOrRight === 0) ? ballSpeed : -ballSpeed
   return velocity
 }
 // Super Hacky work around in an attempt to ensure that points cant get scored too often
