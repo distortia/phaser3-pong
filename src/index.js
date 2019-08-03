@@ -10,27 +10,27 @@ const config = {
   scene: {
     preload: preload,
     create: create,
-    update: update
+    update: update,
+    gameOver: gameOver
   },
   physics: {
     default: 'arcade',
     arcade: {
       debug: false,
     }
-  }
+  },
+  // scene: gameOverScene
 }
 // Player is 50w/100l
 // Ball is 25w/25l
 
 const game = new Phaser.Game(config)
-let player1, player2, ball, leftWall, rightWall, player1ScoreText, player2ScoreText, gameOverText, gameRestartText, beepSound
+let player1, player2, ball, leftWall, rightWall, player1ScoreText, player2ScoreText, beepSound, gameOverText, gameRestartText
 const playerSpeed = 500
-const ballSpeed = 500
+const ballSpeed = 800
 let player1Score = 0
 let player2Score = 0
-let canScore = true
-const maxScore = 10
-let gameOver = false
+const maxScore = 1
 
 function preload() {
   this.load.image('player1', playerImage)
@@ -45,29 +45,27 @@ function create() {
   beepSound         = this.sound.add('beep')
   player1ScoreText  = this.add.text(20, 16, 'Score: 0', {fontSize: '32px', fill: '#000'})
   player2ScoreText  = this.add.text(600, 16, 'Score: 0', {fontSize: '32px', fill: '#000'})
-  gameOverText      = this.add.text(300, 300, '', {fontSize: '32px', fill: '#000'})
   player1           = this.physics.add.sprite(0, 300, 'player1')
   player1.name      = 'player1'
   player2           = this.physics.add.sprite(800, 300, 'player2')
   player2.name      = 'player2'
   ball              = this.physics.add.sprite(400, 300, 'ball')
-
-  leftWall = this.physics.add.sprite(0, 1, '').setScale(1, 100)
+  gameOverText      = this.add.text(300, 300, '', {fontSize: '32px', fill: '#000'})
+  leftWall = this.physics.add.sprite(0, 1, '').setScale(1, 100).setImmovable(true)
   leftWall.name = 'leftWall'
 
-  rightWall = this.physics.add.sprite(800, 1, '').setScale(1, 100)
+  rightWall = this.physics.add.sprite(800, 1, '').setScale(1, 100).setImmovable(true)
   rightWall.name = 'rightWall'
 
   this.physics.add.collider(player1, ball, reflectBall, null, null)
   this.physics.add.collider(player2, ball, reflectBall, null, null)
-  this.physics.add.overlap(ball, leftWall, scorePoint, null, null)
-  this.physics.add.overlap(ball, rightWall, scorePoint, null, null)
+  this.physics.add.collider(ball, leftWall, scorePoint, null, null)
+  this.physics.add.collider(ball, rightWall, scorePoint, null, null)
 
   player1.setCollideWorldBounds(true).setBounce(0)
   player2.setCollideWorldBounds(true).setBounce(0)
   ball.setCollideWorldBounds(true).setBounce(1)
   ball.setVelocityX(randomStartDirection())
-  ball.setVelocity(-ballSpeed, 0)
   ball.setFriction(0)
 }
 
@@ -75,7 +73,6 @@ function update () {
   let cursors = this.input.keyboard.createCursorKeys()
   let keyW = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W)
   let keyS = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S)
-
   if (cursors.up.isDown) {
     player2.setVelocityY(-playerSpeed)
   }
@@ -108,38 +105,31 @@ function reflectBall (player, ball) {
 }
 
 function scorePoint (_ball, wall) {
-  if (canScore) {
-    canScore = false
-    if (wall.name === 'rightWall') {
-      player1Score += 1
-      player1ScoreText.setText(`Score: ${player1Score}`)
-    } else {
-      player2Score += 1
-      player2ScoreText.setText(`Score: ${player2Score}`)
-    }
+  if (wall.name === 'rightWall') {
+    player1Score += 1
+    player1ScoreText.setText(`Score: ${player1Score}`)
+  } else {
+    player2Score += 1
+    player2ScoreText.setText(`Score: ${player2Score}`)
   }
   if(player1Score === maxScore || player2Score === maxScore) {
-    gameIsOver()
+    gameOver()
     return
   }
-  if(!gameOver) {
-    resetCanScore()
-  }
+  ball.setPosition(400, 300)
+  ball.setVelocity(0, 0)
+  setTimeout(() => {
+    ball.setVelocityX(randomStartDirection())
+  }, 3000)
 }
 function randomStartDirection () {
   let leftOrRight = Math.floor(Math.random() * Math.floor(2))
   let velocity = (leftOrRight === 0) ? ballSpeed : -ballSpeed
   return velocity
 }
-// Super Hacky work around in an attempt to ensure that points cant get scored too often
-function resetCanScore() { 
-  setTimeout(() => {
-    canScore = true
-  }, 800)
-}
-function gameIsOver () {
+
+function gameOver () {
+  ball.setVelocity(0, 0)
+  ball.setPosition(400, 300)
   gameOverText.setText('GAME OVER')
-  ball.setVelocity(0)
-  canScore = false
-  gameOver = true
 }
